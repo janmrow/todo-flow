@@ -6,8 +6,8 @@ from pathlib import Path
 from flask import Flask
 
 from .config import DevConfig, TestConfig
-from .routes_ui import bp as ui_bp
 from .routes_api import bp as api_bp
+from .routes_ui import bp as ui_bp
 
 _CONFIGS = {
     "dev": DevConfig,
