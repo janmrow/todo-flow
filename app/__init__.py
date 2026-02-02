@@ -7,6 +7,7 @@ from flask import Flask
 
 from .config import DevConfig, TestConfig
 from .routes_ui import bp as ui_bp
+from .routes_api import bp as api_bp
 
 _CONFIGS = {
     "dev": DevConfig,
@@ -25,4 +26,5 @@ def create_app(config_name: str | None = None) -> Flask:
     app.config.setdefault("SECRET_KEY", os.getenv("SECRET_KEY", "dev"))
 
     app.register_blueprint(ui_bp)
+    app.register_blueprint(api_bp)
     return app
