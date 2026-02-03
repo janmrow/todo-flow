@@ -24,7 +24,6 @@ def create_app(config_name: str | None = None) -> Flask:
     app.config.from_object(config_cls)
 
     Path(app.instance_path).mkdir(parents=True, exist_ok=True)
-    app.config.setdefault("SECRET_KEY", os.getenv("SECRET_KEY", "dev"))
 
     app.register_blueprint(ui_bp)
     app.register_blueprint(api_bp)
