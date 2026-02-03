@@ -70,3 +70,26 @@ def create_task(db: sqlite3.Connection, text: str) -> Task:
     assert row is not None
     return _row_to_task(row)
 
+
+def list_tasks(db: sqlite3.Connection, filter_name: str = "all") -> list[Task]:
+    filter_name = (filter_name or "all").lower()
+
+    if filter_name == "archived":
+        where = "archived = 1"
+    elif filter_name == "active":
+        where = "archived = 0 AND done = 0"
+    elif filter_name == "done":
+        where = "archived = 0 AND done = 1"
+    elif filter_name == "all":
+        where = "archived = 0"
+    else:
+        raise ValidationError("Unknown filter.")
+
+    rows = db.execute(
+        f"SELECT * FROM tasks WHERE {where} ORDER BY created_at DESC, id DESC",
+    ).fetchall()
+    return [_row_to_task(r) for r in rows]
+
+
+def tasks_to_dicts(tasks: Iterable[Task]) -> list[dict]:
+    return [asdict(t) for t in tasks]
