@@ -1,0 +1,16 @@
+services:
+  app:
+    build: .
+    ports:
+      - "5000:5000"
+    environment:
+      - APP_ENV=dev
+      - FLASK_APP=app
+    command: ["flask", "--app", "app", "run", "--host", "0.0.0.0", "--port", "5000"]
+
+  tests:
+    build: .
+    environment:
+      - APP_ENV=test
+      - FLASK_APP=app
+    command: ["pytest", "-q"]
