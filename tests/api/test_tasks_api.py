@@ -19,6 +19,7 @@ def test_api_rejects_empty_task_text(client):
     payload = res.get_json()
     assert payload["error"]["code"] == "validation_error"
 
+
 def test_api_patch_done_updates_task(client):
     res = client.post("/api/tasks", json={"text": "write tests"})
     task_id = res.get_json()["id"]
