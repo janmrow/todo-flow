@@ -1,10 +1,9 @@
 from __future__ import annotations
 
+import sqlite3
 from dataclasses import asdict, dataclass
 from datetime import datetime, timezone
 from typing import Iterable
-
-import sqlite3
 
 MAX_TASK_LEN = 200
 
@@ -14,12 +13,7 @@ class ValidationError(ValueError):
 
 
 def utc_now_iso() -> str:
-    return (
-        datetime.now(timezone.utc)
-        .replace(microsecond=0)
-        .isoformat()
-        .replace("+00:00", "Z")
-    )
+    return datetime.now(timezone.utc).replace(microsecond=0).isoformat().replace("+00:00", "Z")
 
 
 def validate_task_text(text: str) -> str:
