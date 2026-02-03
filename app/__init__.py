@@ -6,6 +6,7 @@ from pathlib import Path
 from flask import Flask
 
 from .config import DevConfig, TestConfig
+from .db import close_db, init_db_command
 from .routes_api import bp as api_bp
 from .routes_ui import bp as ui_bp
 
@@ -27,4 +28,8 @@ def create_app(config_name: str | None = None) -> Flask:
 
     app.register_blueprint(ui_bp)
     app.register_blueprint(api_bp)
+
+    app.teardown_appcontext(close_db)
+    app.cli.add_command(init_db_command)
+
     return app
