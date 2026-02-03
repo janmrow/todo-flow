@@ -1,5 +1,6 @@
 import os
 
+
 class DevConfig:
     DEBUG = True
     TESTING = False

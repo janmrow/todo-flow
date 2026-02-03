@@ -33,12 +33,13 @@ def create_app(config_name: str | None = None) -> Flask:
     app.cli.add_command(init_db_command)
 
     with app.app_context():
-            from .db import init_db
-            try:
-                db = get_db()
-                db.execute("SELECT 1 FROM tasks LIMIT 1")
-            except:
-                init_db()
-                print("Database initialized.")
+        from .db import get_db, init_db
+
+        try:
+            db = get_db()
+            db.execute("SELECT 1 FROM tasks LIMIT 1")
+        except Exception:
+            init_db()
+            print("Database initialized.")
 
     return app
