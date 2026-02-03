@@ -1,18 +1,25 @@
 import sys
 from pathlib import Path
 
-import pytest
-
+# ruff: noqa: E402
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
 
-from app import create_app  # noqa: E402
+import pytest
+
+from app import create_app
+from app.db import init_db
 
 
 @pytest.fixture()
-def app():
+def app(tmp_path):
     app = create_app("test")
-    app.config.update(SECRET_KEY="test")
+    app.config.update(
+        DATABASE_PATH=str(tmp_path / "test.sqlite"),
+        SECRET_KEY="test",
+    )
+    with app.app_context():
+        init_db()
     yield app
 
 
