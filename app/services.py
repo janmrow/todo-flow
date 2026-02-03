@@ -107,6 +107,34 @@ def list_tasks(db: sqlite3.Connection, filter_name: str = "all") -> list[Task]:
     return [_row_to_task(r) for r in rows]
 
 
+def set_task_done(db: sqlite3.Connection, task_id: int, done: bool) -> Task:
+    task = get_task(db, task_id)
+    if task is None:
+        raise NotFoundError("Task not found.")
+    if task.archived:
+        raise StateConflictError("Cannot change archived task.")
+    if task.done == done:
+        return task
+
+    now = utc_now_iso()
+    db.execute(
+        "UPDATE tasks SET done = ?, updated_at = ? WHERE id = ?",
+        (1 if done else 0, now, task_id),
+    )
+    db.commit()
+
+    updated = get_task(db, task_id)
+    assert updated is not None
+    return updated
+
+
+def toggle_task_done(db: sqlite3.Connection, task_id: int) -> Task:
+    task = get_task(db, task_id)
+    if task is None:
+        raise NotFoundError("Task not found.")
+    return set_task_done(db, task_id, done=not task.done)
+
+
 def tasks_to_dicts(tasks: Iterable[Task]) -> list[dict]:
     return [asdict(t) for t in tasks]
 
