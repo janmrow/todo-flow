@@ -7,6 +7,8 @@ from .services import (
     NotFoundError,
     StateConflictError,
     ValidationError,
+    archive_done,
+    archive_task,
     create_task,
     list_tasks,
     toggle_task_done,
@@ -56,5 +58,36 @@ def toggle_task(task_id: int):
         abort(404)
     except StateConflictError as e:
         flash(str(e), category="error")
+
+    return redirect(url_for("ui.index", filter=filter_name))
+
+
+@bp.post("/tasks/<int:task_id>/archive")
+def archive_task_ui(task_id: int):
+    filter_name = request.args.get("filter", "all")
+    db = get_db()
+
+    try:
+        archive_task(db, task_id=task_id)
+    except NotFoundError:
+        abort(404)
+    except StateConflictError as e:
+        flash(str(e), category="error")
+    else:
+        flash("Task archived.", category="success")
+
+    return redirect(url_for("ui.index", filter=filter_name))
+
+
+@bp.post("/tasks/archive_done")
+def archive_done_ui():
+    filter_name = request.args.get("filter", "all")
+    db = get_db()
+
+    count = archive_done(db)
+    if count:
+        flash(f"Archived {count} done task(s).", category="success")
+    else:
+        flash("Nothing to archive.", category="success")
 
     return redirect(url_for("ui.index", filter=filter_name))
