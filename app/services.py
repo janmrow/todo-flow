@@ -1,9 +1,10 @@
 from __future__ import annotations
 
-import sqlite3
 from dataclasses import asdict, dataclass
 from datetime import datetime, timezone
 from typing import Iterable
+
+import sqlite3
 
 MAX_TASK_LEN = 200
 
@@ -22,7 +23,12 @@ class StateConflictError(RuntimeError):
 
 def utc_now_iso() -> str:
     # Keep timestamps stable and easy to compare in tests.
-    return datetime.now(timezone.utc).replace(microsecond=0).isoformat().replace("+00:00", "Z")
+    return (
+        datetime.now(timezone.utc)
+        .replace(microsecond=0)
+        .isoformat()
+        .replace("+00:00", "Z")
+    )
 
 
 def validate_task_text(text: str) -> str:
@@ -91,6 +97,7 @@ def list_tasks(db: sqlite3.Connection, filter_name: str = "all") -> list[Task]:
     elif filter_name == "done":
         where = "archived = 0 AND done = 1"
     elif filter_name == "all":
+        # "All" shows non-archived tasks.
         where = "archived = 0"
     else:
         raise ValidationError("Unknown filter.")
@@ -127,6 +134,41 @@ def toggle_task_done(db: sqlite3.Connection, task_id: int) -> Task:
     if task is None:
         raise NotFoundError("Task not found.")
     return set_task_done(db, task_id, done=not task.done)
+
+
+def set_task_archived(db: sqlite3.Connection, task_id: int, archived: bool) -> Task:
+    task = get_task(db, task_id)
+    if task is None:
+        raise NotFoundError("Task not found.")
+    if task.archived == archived:
+        return task
+    if not archived:
+        raise StateConflictError("Cannot unarchive task.")
+
+    now = utc_now_iso()
+    db.execute(
+        "UPDATE tasks SET archived = 1, updated_at = ? WHERE id = ?",
+        (now, task_id),
+    )
+    db.commit()
+
+    updated = get_task(db, task_id)
+    assert updated is not None
+    return updated
+
+
+def archive_task(db: sqlite3.Connection, task_id: int) -> Task:
+    return set_task_archived(db, task_id, archived=True)
+
+
+def archive_done(db: sqlite3.Connection) -> int:
+    now = utc_now_iso()
+    cur = db.execute(
+        "UPDATE tasks SET archived = 1, updated_at = ? WHERE archived = 0 AND done = 1",
+        (now,),
+    )
+    db.commit()
+    return int(cur.rowcount)
 
 
 def tasks_to_dicts(tasks: Iterable[Task]) -> list[dict]:
