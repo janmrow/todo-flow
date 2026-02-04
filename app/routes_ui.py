@@ -1,9 +1,16 @@
 from __future__ import annotations
 
-from flask import Blueprint, flash, redirect, render_template, request, url_for
+from flask import Blueprint, abort, flash, redirect, render_template, request, url_for
 
 from .db import get_db
-from .services import ValidationError, create_task, list_tasks
+from .services import (
+    NotFoundError,
+    StateConflictError,
+    ValidationError,
+    create_task,
+    list_tasks,
+    toggle_task_done,
+)
 
 bp = Blueprint("ui", __name__)
 
@@ -34,5 +41,20 @@ def add_task():
         flash(str(e), category="error")
     else:
         flash("Task added.", category="success")
+
+    return redirect(url_for("ui.index", filter=filter_name))
+
+
+@bp.post("/tasks/<int:task_id>/toggle")
+def toggle_task(task_id: int):
+    filter_name = request.args.get("filter", "all")
+    db = get_db()
+
+    try:
+        toggle_task_done(db, task_id=task_id)
+    except NotFoundError:
+        abort(404)
+    except StateConflictError as e:
+        flash(str(e), category="error")
 
     return redirect(url_for("ui.index", filter=filter_name))
