@@ -7,8 +7,10 @@ from .services import (
     NotFoundError,
     StateConflictError,
     ValidationError,
+    archive_done,
     create_task,
     list_tasks,
+    set_task_archived,
     set_task_done,
     task_to_dict,
     tasks_to_dicts,
@@ -53,27 +55,13 @@ def tasks_create():
 def tasks_patch(task_id: int):
     payload = request.get_json(silent=True) or {}
 
-    if "done" not in payload:
+    if "done" not in payload and "archived" not in payload:
         return (
             jsonify(
                 {
                     "error": {
                         "code": "validation_error",
-                        "message": "Missing required field: done",
-                    }
-                }
-            ),
-            400,
-        )
-
-    done = payload.get("done")
-    if not isinstance(done, bool):
-        return (
-            jsonify(
-                {
-                    "error": {
-                        "code": "validation_error",
-                        "message": "Field 'done' must be a boolean",
+                        "message": "Provide at least one field: done or archived",
                     }
                 }
             ),
@@ -81,11 +69,64 @@ def tasks_patch(task_id: int):
         )
 
     db = get_db()
+    task = None
+
     try:
-        task = set_task_done(db, task_id=task_id, done=done)
+        if "done" in payload:
+            done = payload.get("done")
+            if not isinstance(done, bool):
+                return (
+                    jsonify(
+                        {
+                            "error": {
+                                "code": "validation_error",
+                                "message": "Field 'done' must be a boolean",
+                            }
+                        }
+                    ),
+                    400,
+                )
+            task = set_task_done(db, task_id=task_id, done=done)
+
+        if "archived" in payload:
+            archived = payload.get("archived")
+            if not isinstance(archived, bool):
+                return (
+                    jsonify(
+                        {
+                            "error": {
+                                "code": "validation_error",
+                                "message": "Field 'archived' must be a boolean",
+                            }
+                        }
+                    ),
+                    400,
+                )
+            if archived is False:
+                return (
+                    jsonify(
+                        {
+                            "error": {
+                                "code": "validation_error",
+                                "message": "Unarchiving is not supported",
+                            }
+                        }
+                    ),
+                    400,
+                )
+            task = set_task_archived(db, task_id=task_id, archived=True)
+
     except NotFoundError as e:
         return jsonify({"error": {"code": "not_found", "message": str(e)}}), 404
     except StateConflictError as e:
         return jsonify({"error": {"code": "state_conflict", "message": str(e)}}), 409
 
+    assert task is not None
     return jsonify(task_to_dict(task))
+
+
+@bp.post("/tasks/archive_done")
+def tasks_archive_done():
+    db = get_db()
+    count = archive_done(db)
+    return jsonify({"archived_count": count})
