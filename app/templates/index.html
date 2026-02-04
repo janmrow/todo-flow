@@ -32,7 +32,7 @@
         <input class="form-control" name="text" placeholder="Add a task and press Enter…" autofocus>
         <button class="btn btn-primary" type="submit">Add</button>
       </div>
-      <div class="form-text">Keep it short. You can add actions later (done/archive).</div>
+      <div class="form-text">Keep it short. Toggle done when you finish.</div>
     </form>
 
     <ul class="nav nav-pills mb-3">
@@ -52,10 +52,27 @@
             {% for t in tasks %}
               <li class="list-group-item d-flex justify-content-between align-items-center">
                 <div class="me-3">
-                  <span class="fw-semibold">{{ t.text }}</span>
+                  <div class="fw-semibold">{{ t.text }}</div>
                   <div class="text-muted small">#{{ t.id }} • {{ t.created_at }}</div>
                 </div>
-                <span class="badge text-bg-secondary">todo</span>
+
+                <div class="d-flex align-items-center gap-2">
+                  {% if t.done %}
+                    <span class="badge text-bg-success">done</span>
+                  {% else %}
+                    <span class="badge text-bg-secondary">todo</span>
+                  {% endif %}
+
+                  {% if filter_name != "archived" %}
+                    <form method="post" action="{{ url_for('ui.toggle_task', task_id=t.id, filter=filter_name) }}" class="m-0">
+                      {% if t.done %}
+                        <button class="btn btn-sm btn-outline-secondary" type="submit">Undo</button>
+                      {% else %}
+                        <button class="btn btn-sm btn-outline-primary" type="submit">Done</button>
+                      {% endif %}
+                    </form>
+                  {% endif %}
+                </div>
               </li>
             {% endfor %}
           </ul>
