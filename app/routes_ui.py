@@ -20,6 +20,8 @@ bp = Blueprint("ui", __name__)
 
 @bp.get("/")
 def index():
+    from .services import task_counts
+
     db = get_db()
     filter_name = request.args.get("filter", "all")
 
@@ -29,7 +31,8 @@ def index():
         filter_name = "all"
         tasks = list_tasks(db, filter_name=filter_name)
 
-    return render_template("index.html", tasks=tasks, filter_name=filter_name)
+    counts = task_counts(db)
+    return render_template("index.html", tasks=tasks, filter_name=filter_name, counts=counts)
 
 
 @bp.post("/tasks")

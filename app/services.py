@@ -182,3 +182,21 @@ def tasks_to_dicts(tasks: Iterable[Task]) -> list[dict]:
 
 def task_to_dict(task: Task) -> dict:
     return asdict(task)
+
+
+def task_counts(db: sqlite3.Connection) -> dict[str, int]:
+    row = db.execute(
+        """
+        SELECT
+          SUM(CASE WHEN archived = 0 AND done = 0 THEN 1 ELSE 0 END) AS active,
+          SUM(CASE WHEN archived = 0 AND done = 1 THEN 1 ELSE 0 END) AS done,
+          SUM(CASE WHEN archived = 1 THEN 1 ELSE 0 END) AS archived
+        FROM tasks
+        """
+    ).fetchone()
+
+    return {
+        "active": int(row["active"] or 0),
+        "done": int(row["done"] or 0),
+        "archived": int(row["archived"] or 0),
+    }

@@ -4,64 +4,164 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>One-Line To-Do</title>
+
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
+
+  <style>
+    body { background: #f6f7fb; }
+
+    .app-shell {
+      max-width: 740px;
+    }
+
+    .app-card {
+      border: 0;
+      box-shadow: 0 12px 30px rgba(16, 24, 40, 0.08);
+      border-radius: 14px;
+      overflow: hidden;
+    }
+
+    .app-header {
+      background: linear-gradient(135deg, #111827, #1f2937);
+      color: #fff;
+    }
+
+    .app-header .muted {
+      color: rgba(255, 255, 255, 0.75);
+    }
+
+    .pill-count {
+      background: rgba(255, 255, 255, 0.12);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      border-radius: 999px;
+      padding: 6px 10px;
+      font-size: 0.85rem;
+      display: inline-flex;
+      gap: 10px;
+      align-items: center;
+    }
+
+    .pill-count b { font-weight: 700; }
+
+    .task-row:hover {
+      background: #fafbff;
+    }
+
+    .task-text.done {
+      text-decoration: line-through;
+      color: #6c757d;
+    }
+
+    .btn-icon {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      white-space: nowrap;
+    }
+
+    .nav-pills .nav-link {
+      border-radius: 999px;
+      padding: 6px 12px;
+    }
+
+    .empty-state {
+      padding: 28px 12px;
+      text-align: center;
+      color: #6c757d;
+    }
+
+    .empty-state .emoji {
+      font-size: 28px;
+      margin-bottom: 8px;
+    }
+  </style>
 </head>
-<body class="bg-light">
-  <main class="container py-5" style="max-width: 680px;">
-    <div class="d-flex align-items-baseline justify-content-between mb-3">
-      <h1 class="h3 m-0">One-Line To-Do</h1>
-      <span class="text-muted small">Flask + SQLite</span>
-    </div>
 
-    {% with messages = get_flashed_messages(with_categories=true) %}
-      {% if messages %}
-        <div class="mb-3">
-          {% for category, message in messages %}
-            {% if category == "error" %}
-              <div class="alert alert-danger py-2 mb-2">{{ message }}</div>
-            {% else %}
-              <div class="alert alert-success py-2 mb-2">{{ message }}</div>
-            {% endif %}
-          {% endfor %}
+<body>
+  <main class="container py-5 app-shell">
+    <div class="app-card mb-4">
+      <div class="app-header p-4">
+        <div class="d-flex flex-wrap gap-3 align-items-center justify-content-between">
+          <div>
+            <div class="d-flex align-items-center gap-2">
+              <i class="bi bi-check2-square fs-4"></i>
+              <h1 class="h4 m-0">One-Line To-Do</h1>
+            </div>
+            <div class="muted small mt-1">Flask + SQLite • server-rendered • test playground</div>
+          </div>
+
+          <div class="pill-count">
+            <span>Active <b>{{ counts.active }}</b></span>
+            <span>Done <b>{{ counts.done }}</b></span>
+            <span>Archived <b>{{ counts.archived }}</b></span>
+          </div>
         </div>
-      {% endif %}
-    {% endwith %}
-
-    <form class="card card-body mb-3" method="post" action="{{ url_for('ui.add_task', filter=filter_name) }}">
-      <div class="input-group">
-        <input class="form-control" name="text" placeholder="Add a task and press Enter…" autofocus>
-        <button class="btn btn-primary" type="submit">Add</button>
       </div>
-      <div class="form-text">Keep it short. Toggle done when you finish.</div>
-    </form>
 
-    <div class="d-flex align-items-center justify-content-between mb-3">
-      <ul class="nav nav-pills">
-        {% set tabs = [("all", "All"), ("active", "Active"), ("done", "Done"), ("archived", "Archived")] %}
-        {% for key, label in tabs %}
-          <li class="nav-item">
-            <a class="nav-link {% if filter_name == key %}active{% endif %}"
-               href="{{ url_for('ui.index', filter=key) }}">{{ label }}</a>
-          </li>
-        {% endfor %}
-      </ul>
+      <div class="p-4 bg-white border-bottom">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+          {% if messages %}
+            <div class="mb-3">
+              {% for category, message in messages %}
+                {% if category == "error" %}
+                  <div class="alert alert-danger py-2 mb-2">{{ message }}</div>
+                {% else %}
+                  <div class="alert alert-success py-2 mb-2">{{ message }}</div>
+                {% endif %}
+              {% endfor %}
+            </div>
+          {% endif %}
+        {% endwith %}
 
-      {% if filter_name != "archived" %}
-        <form method="post" action="{{ url_for('ui.archive_done_ui', filter=filter_name) }}" class="m-0">
-          <button class="btn btn-sm btn-outline-secondary" type="submit">Archive done</button>
+        <form method="post" action="{{ url_for('ui.add_task', filter=filter_name) }}">
+          <div class="input-group">
+            <span class="input-group-text"><i class="bi bi-plus-circle"></i></span>
+            <input class="form-control" name="text" placeholder="Add a task and press Enter…" autofocus>
+            <button class="btn btn-primary btn-icon" type="submit">
+              <i class="bi bi-plus-lg"></i> Add
+            </button>
+          </div>
+          <div class="form-text">Short tasks work best. Finish → Done, then Archive.</div>
         </form>
-      {% endif %}
-    </div>
 
-    <div class="card">
-      <div class="card-body">
+        <div class="d-flex flex-wrap gap-2 align-items-center justify-content-between mt-3">
+          <ul class="nav nav-pills">
+            {% set tabs = [("all", "All"), ("active", "Active"), ("done", "Done"), ("archived", "Archived")] %}
+            {% for key, label in tabs %}
+              <li class="nav-item">
+                <a class="nav-link {% if filter_name == key %}active{% endif %}"
+                   href="{{ url_for('ui.index', filter=key) }}">
+                  {{ label }}
+                </a>
+              </li>
+            {% endfor %}
+          </ul>
+
+          {% if filter_name != "archived" %}
+            <form method="post" action="{{ url_for('ui.archive_done_ui', filter=filter_name) }}" class="m-0">
+              <button class="btn btn-sm btn-outline-secondary btn-icon" type="submit">
+                <i class="bi bi-archive"></i> Archive done
+              </button>
+            </form>
+          {% endif %}
+        </div>
+      </div>
+
+      <div class="bg-white">
         {% if tasks %}
           <ul class="list-group list-group-flush">
             {% for t in tasks %}
-              <li class="list-group-item d-flex justify-content-between align-items-center">
+              <li class="list-group-item d-flex justify-content-between align-items-center task-row py-3">
                 <div class="me-3">
-                  <div class="fw-semibold">{{ t.text }}</div>
-                  <div class="text-muted small">#{{ t.id }} • {{ t.created_at }}</div>
+                  {% if t.archived %}
+                    <span class="task-text">{{ t.text }}</span>
+                  {% elif t.done %}
+                    <span class="task-text done">{{ t.text }}</span>
+                  {% else %}
+                    <span class="task-text">{{ t.text }}</span>
+                  {% endif %}
+                  <div class="text-muted small mt-1">#{{ t.id }} • {{ t.created_at }}</div>
                 </div>
 
                 <div class="d-flex align-items-center gap-2">
@@ -78,20 +178,28 @@
                   {% if not t.archived %}
                     <form method="post" action="{{ url_for('ui.toggle_task', task_id=t.id, filter=filter_name) }}" class="m-0">
                       {% if t.done %}
-                        <button class="btn btn-sm btn-outline-secondary" type="submit">Undo</button>
+                        <button class="btn btn-sm btn-outline-secondary btn-icon" type="submit">
+                          <i class="bi bi-arrow-counterclockwise"></i> Undo
+                        </button>
                       {% else %}
-                        <button class="btn btn-sm btn-outline-primary" type="submit">Done</button>
+                        <button class="btn btn-sm btn-outline-primary btn-icon" type="submit">
+                          <i class="bi bi-check2"></i> Done
+                        </button>
                       {% endif %}
                     </form>
 
                     <form method="post" action="{{ url_for('ui.archive_task_ui', task_id=t.id, filter=filter_name) }}" class="m-0">
-                      <button class="btn btn-sm btn-outline-danger" type="submit">Archive</button>
+                      <button class="btn btn-sm btn-outline-danger btn-icon" type="submit">
+                        <i class="bi bi-archive"></i> Archive
+                      </button>
                     </form>
                   {% endif %}
 
                   {% if t.archived and filter_name == "archived" %}
                     <form method="post" action="{{ url_for('ui.delete_task_ui', task_id=t.id, filter=filter_name) }}" class="m-0">
-                      <button class="btn btn-sm btn-outline-secondary" type="submit">Delete</button>
+                      <button class="btn btn-sm btn-outline-secondary btn-icon" type="submit">
+                        <i class="bi bi-trash3"></i> Delete
+                      </button>
                     </form>
                   {% endif %}
                 </div>
@@ -99,9 +207,17 @@
             {% endfor %}
           </ul>
         {% else %}
-          <p class="text-muted m-0">No tasks yet. Add one above.</p>
+          <div class="empty-state">
+            <div class="emoji">🧱</div>
+            <div class="fw-semibold">Nothing here yet.</div>
+            <div class="small">Add a task above to get started.</div>
+          </div>
         {% endif %}
       </div>
+    </div>
+
+    <div class="text-center text-muted small">
+      Built for QA + DevOps practice • <span class="text-decoration-none">/api/health</span>
     </div>
   </main>
 </body>
