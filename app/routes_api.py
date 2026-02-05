@@ -9,6 +9,7 @@ from .services import (
     ValidationError,
     archive_done,
     create_task,
+    delete_task,
     list_tasks,
     set_task_archived,
     set_task_done,
@@ -123,6 +124,19 @@ def tasks_patch(task_id: int):
 
     assert task is not None
     return jsonify(task_to_dict(task))
+
+
+@bp.delete("/tasks/<int:task_id>")
+def tasks_delete(task_id: int):
+    db = get_db()
+    try:
+        delete_task(db, task_id=task_id)
+    except NotFoundError as e:
+        return jsonify({"error": {"code": "not_found", "message": str(e)}}), 404
+    except StateConflictError as e:
+        return jsonify({"error": {"code": "state_conflict", "message": str(e)}}), 409
+
+    return jsonify({"deleted": True})
 
 
 @bp.post("/tasks/archive_done")
