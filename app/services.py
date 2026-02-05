@@ -1,9 +1,10 @@
 from __future__ import annotations
 
-import sqlite3
 from dataclasses import asdict, dataclass
 from datetime import datetime, timezone
 from typing import Iterable
+
+import sqlite3
 
 MAX_TASK_LEN = 200
 
@@ -22,7 +23,12 @@ class StateConflictError(RuntimeError):
 
 def utc_now_iso() -> str:
     # Keep timestamps stable and easy to compare in tests.
-    return datetime.now(timezone.utc).replace(microsecond=0).isoformat().replace("+00:00", "Z")
+    return (
+        datetime.now(timezone.utc)
+        .replace(microsecond=0)
+        .isoformat()
+        .replace("+00:00", "Z")
+    )
 
 
 def validate_task_text(text: str) -> str:
@@ -163,6 +169,17 @@ def archive_done(db: sqlite3.Connection) -> int:
     )
     db.commit()
     return int(cur.rowcount)
+
+
+def delete_task(db: sqlite3.Connection, task_id: int) -> None:
+    task = get_task(db, task_id)
+    if task is None:
+        raise NotFoundError("Task not found.")
+    if not task.archived:
+        raise StateConflictError("Cannot delete non-archived task.")
+
+    db.execute("DELETE FROM tasks WHERE id = ?", (task_id,))
+    db.commit()
 
 
 def tasks_to_dicts(tasks: Iterable[Task]) -> list[dict]:
