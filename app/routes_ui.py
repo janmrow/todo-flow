@@ -10,6 +10,7 @@ from .services import (
     archive_done,
     archive_task,
     create_task,
+    delete_task,
     list_tasks,
     toggle_task_done,
 )
@@ -89,5 +90,22 @@ def archive_done_ui():
         flash(f"Archived {count} done task(s).", category="success")
     else:
         flash("Nothing to archive.", category="success")
+
+    return redirect(url_for("ui.index", filter=filter_name))
+
+
+@bp.post("/tasks/<int:task_id>/delete")
+def delete_task_ui(task_id: int):
+    filter_name = request.args.get("filter", "all")
+    db = get_db()
+
+    try:
+        delete_task(db, task_id=task_id)
+    except NotFoundError:
+        abort(404)
+    except StateConflictError as e:
+        flash(str(e), category="error")
+    else:
+        flash("Task deleted.", category="success")
 
     return redirect(url_for("ui.index", filter=filter_name))

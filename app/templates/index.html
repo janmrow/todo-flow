@@ -88,6 +88,12 @@
                       <button class="btn btn-sm btn-outline-danger" type="submit">Archive</button>
                     </form>
                   {% endif %}
+
+                  {% if t.archived and filter_name == "archived" %}
+                    <form method="post" action="{{ url_for('ui.delete_task_ui', task_id=t.id, filter=filter_name) }}" class="m-0">
+                      <button class="btn btn-sm btn-outline-secondary" type="submit">Delete</button>
+                    </form>
+                  {% endif %}
                 </div>
               </li>
             {% endfor %}
