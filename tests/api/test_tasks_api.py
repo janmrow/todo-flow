@@ -72,3 +72,24 @@ def test_api_archive_done_archives_only_done(client):
     res = client.get("/api/tasks?filter=active")
     items = res.get_json()["items"]
     assert [t["id"] for t in items] == [t2]
+
+def test_api_delete_archived_task(client):
+    task_id = client.post("/api/tasks", json={"text": "remove me"}).get_json()["id"]
+    client.patch(f"/api/tasks/{task_id}", json={"archived": True})
+
+    res = client.delete(f"/api/tasks/{task_id}")
+    assert res.status_code == 200
+    assert res.get_json() == {"deleted": True}
+
+    res = client.get("/api/tasks?filter=archived")
+    items = res.get_json()["items"]
+    assert items == []
+
+
+def test_api_delete_non_archived_is_conflict(client):
+    task_id = client.post("/api/tasks", json={"text": "nope"}).get_json()["id"]
+
+    res = client.delete(f"/api/tasks/{task_id}")
+    assert res.status_code == 409
+    assert res.get_json()["error"]["code"] == "state_conflict"
+
