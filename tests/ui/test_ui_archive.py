@@ -21,21 +21,21 @@ def test_ui_archive_button_moves_task_to_archived(client, app):
 
 
 def test_ui_archive_done_archives_done_tasks_only(client, app):
-    client.post("/tasks", data={"text": "a"}, follow_redirects=True)
-    client.post("/tasks", data={"text": "b"}, follow_redirects=True)
+    client.post("/tasks", data={"text": "task-a"}, follow_redirects=True)
+    client.post("/tasks", data={"text": "task-b"}, follow_redirects=True)
 
     with app.app_context():
         db = get_db()
         tasks = list_tasks(db, filter_name="all")
-        id_a = next(t.id for t in tasks if t.text == "a")
+        id_a = next(t.id for t in tasks if t.text == "task-a")
 
     client.post(f"/tasks/{id_a}/toggle", follow_redirects=True)
     res = client.post("/tasks/archive_done", follow_redirects=True)
     assert res.status_code == 200
 
     res = client.get("/?filter=archived")
-    assert b">a<" in res.data
-    assert b">b<" not in res.data
+    assert b"task-a" in res.data
+    assert b"task-b" not in res.data
 
     res = client.get("/?filter=active")
-    assert b">b<" in res.data
+    assert b"task-b" in res.data
