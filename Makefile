@@ -17,3 +17,7 @@ docker-up:
 
 docker-test:
 	docker compose run --rm tests
+
+docker-e2e:
+	docker compose run --rm e2e
+
