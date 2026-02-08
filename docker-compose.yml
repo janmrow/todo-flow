@@ -1,6 +1,8 @@
 services:
   app:
     build: .
+    hostname: app.local
+    container_name: todo-flow-app
     ports:
       - "5000:5000"
     environment:
@@ -18,14 +20,19 @@ services:
     environment:
       - APP_ENV=test
       - FLASK_APP=app
-    command: ["pytest", "-q"]
+      - BASE_URL=http://app.local:5000
+    command: ["pytest", "-q", "tests", "--ignore=tests/e2e"]
+    depends_on:
+      app:
+        condition: service_healthy
 
   e2e:
+    profiles: ["test"]
     build:
       context: .
       dockerfile: Dockerfile.e2e
     environment:
-      - BASE_URL=http://app:5000
+      - BASE_URL=http://app.local:5000
     depends_on:
       app:
         condition: service_healthy

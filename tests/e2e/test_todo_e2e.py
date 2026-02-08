@@ -26,7 +26,7 @@ def test_basic_flow_add_done_archive_delete(page, base_url: str):
 
     # Archive done (bulk) from non-archived view.
     page.get_by_role("button", name="Archive done").click()
-    expect(page.get_by_text("Archived", exact=False)).to_be_visible()
+    expect(page.locator(".alert-success")).to_be_visible()
 
     # In archived filter we should see the task.
     page.get_by_role("link", name="Archived").click()

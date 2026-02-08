@@ -12,6 +12,7 @@ RUN python -m playwright install --with-deps chromium
 
 COPY . .
 
-ENV BASE_URL=http://app:5000
+# Ustawiamy domyślny BASE_URL (może być nadpisany przez compose)
+ENV BASE_URL=http://app.local:5000
 
 CMD ["pytest", "-q", "tests/e2e"]
