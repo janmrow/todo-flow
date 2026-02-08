@@ -16,7 +16,7 @@ def _wait_for_health(base_url: str, timeout_s: int = 30) -> None:
             with urllib.request.urlopen(url, timeout=2) as resp:
                 if resp.status == 200:
                     return
-        except Exception as e:  # noqa: BLE001
+        except Exception as e:
             last_err = e
             time.sleep(0.5)
 
@@ -25,7 +25,7 @@ def _wait_for_health(base_url: str, timeout_s: int = 30) -> None:
 
 @pytest.fixture(scope="session")
 def base_url() -> str:
-    return os.environ.get("BASE_URL", "http://127.0.0.1:5000")
+    return os.environ["BASE_URL"]
 
 
 @pytest.fixture(scope="session", autouse=True)
@@ -37,7 +37,15 @@ def wait_for_app(base_url: str):
 @pytest.fixture(scope="session")
 def browser():
     with sync_playwright() as p:
-        browser = p.chromium.launch()
+        browser = p.chromium.launch(
+            headless=True,
+            args=[
+                "--no-sandbox",
+                "--disable-setuid-sandbox",
+                "--disable-gpu",
+                "--disable-web-security",
+            ],
+        )
         yield browser
         browser.close()
 
