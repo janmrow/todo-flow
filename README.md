@@ -26,5 +26,5 @@ Open: [http://127.0.0.1:5000](http://127.0.0.1:5000)
 * Run tests: pytest -q
 * Run with Docker: docker compose up --build
 * Health check: GET /api/health
-* Run E2E tests (Playwright) with Docker: docker compose run --rm e2e
+* Run E2E tests (Playwright) with Docker: docker compose run --build --rm e2e
 ---
