@@ -1,18 +1,16 @@
 FROM mcr.microsoft.com/playwright/python:v1.40.0-jammy
 
-WORKDIR /app
-
+ENV PLAYWRIGHT_BROWSERS_PATH=/ms-playwright
 ENV PYTHONDONTWRITEBYTECODE=1
 ENV PYTHONUNBUFFERED=1
+
+WORKDIR /app
 
 COPY requirements.txt requirements-dev.txt ./
 RUN pip install --no-cache-dir -r requirements.txt -r requirements-dev.txt
 
-RUN python -m playwright install --with-deps chromium
-
 COPY . .
 
-# Ustawiamy domyślny BASE_URL (może być nadpisany przez compose)
 ENV BASE_URL=http://app.local:5000
 
 CMD ["pytest", "-q", "tests/e2e"]
